@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>استمارة</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --danger:#dc2626;
+      --dangerBg:#fef2f2;
+      --okBg:#f0fdf4;
+      --shadow: 0 10px 30px rgba(17,24,39,0.08);
+      --radius:16px;
+      --red:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Naskh Arabic", "Noto Sans Arabic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{max-width:980px; margin:18px auto; padding:0 14px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:16px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Top progress (only step count + bar) */
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      margin-bottom:12px;
+    }
+    .stepLabel{color:var(--muted); font-size:12px}
+    .bar{height:10px; width:100%; background:#eef2ff; border-radius:999px; overflow:hidden; border:1px solid #e0e7ff}
+    .bar > div{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #60a5fa); border-radius:999px;}
+
+    .step{display:none}
+    .step.active{display:block}
+
+    h2{margin:0 0 10px 0; font-size:16px}
+    .note{color:var(--muted); font-size:13px; line-height:1.75; margin:0 0 14px 0}
+
+    label{display:block; font-size:13px; color:var(--muted); margin:0 0 6px 0}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%; background:#fff; color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 12px;
+      outline:none; font-size:15px;
+    }
+    textarea{min-height:92px; resize:vertical}
+    textarea::placeholder{color:#9ca3af}
+
+    input:focus, select:focus, textarea:focus{
+      border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,0.12)
+    }
+
+    .stack{display:flex; flex-direction:column; gap:12px}
+    .field{display:flex; flex-direction:column; gap:6px}
+
+    .radioRow{display:flex; gap:12px; flex-wrap:wrap}
+    .radio{
+      display:flex; align-items:center; gap:10px; background:#fafafa;
+      border:1px solid var(--border); border-radius:12px; padding:10px 12px;
+      flex: 1 1 140px;
+    }
+    .radio input{transform:scale(1.05)}
+
+    .errors{
+      display:none; margin-top:12px; border:1px solid rgba(220,38,38,0.35);
+      background:var(--dangerBg); border-radius:14px; padding:12px;
+    }
+    .errors.active{display:block}
+    .errors ul{margin:0; padding:0 18px 0 0; color:#991b1b; font-size:13px; line-height:1.7}
+
+    .actions{
+      display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:16px;
+      border-top:1px solid #f3f4f6; padding-top:14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:1px solid var(--border); border-radius:12px; padding:10px 14px;
+      background:#fafafa; color:var(--text); cursor:pointer; font-size:14px;
+    }
+    .btn.primary{
+      background:linear-gradient(90deg, var(--accent), #60a5fa);
+      border-color:#bfdbfe;
+      color:#ffffff;
+      font-weight:700;
+    }
+    .btn:disabled{opacity:0.55; cursor:not-allowed}
+
+    /* Intro */
+    .expertRed{color:var(--red); font-weight:800}
+
+    /* Step 3 question styling (bigger, aligned) */
+    .qBlock{
+      margin-top:6px;
+      padding:14px 14px;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      background:#ffffff;
+    }
+    .qTitle{
+      font-size:18px;
+      line-height:1.9;
+      color:var(--text);
+      margin:0 0 10px 0;
+      font-weight:800;
+    }
+    .qSub{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.9;
+    }
+
+    /* Step 3 timer */
+    .timerBox{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border:1px solid #dbeafe; background:#eff6ff; border-radius:14px; padding:10px 12px; margin:12px 0 10px 0;
+      flex-wrap:wrap;
+    }
+    .timerBox b{color:#1e3a8a}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .warn{
+      display:none;
+      border:1px solid rgba(220,38,38,0.25);
+      background:#fff7ed;
+      color:#9a3412;
+      border-radius:14px;
+      padding:10px 12px;
+      margin:10px 0 0 0;
+      font-size:13px;
+      line-height:1.6;
+    }
+    .warn.active{display:block}
+
+    /* Emphasis questions (Step 4 & 5) */
+    .bigQuestion{
+      font-size:18px;
+      font-weight:900;
+      color:var(--text);
+      line-height:1.9;
+      margin:0 0 10px 0;
+    }
+    .bigQuestion small{
+      display:block;
+      font-size:14px;
+      font-weight:600;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    /* Ranking (touch-friendly custom drag) */
+    .rankCard{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      background:#fcfcfd;
+      position:relative;
+    }
+    .rankCard h3{margin:0 0 10px 0; font-size:14px; color:var(--muted)}
+    .wordBank{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:10px;
+      border:1px dashed #d1d5db;
+      border-radius:14px;
+      min-height:58px;
+      background:#ffffff;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid #dbeafe;
+      background:#eff6ff;
+      color:#1e3a8a;
+      font-size:15px;
+      cursor:grab;
+      user-select:none;
+      touch-action:none;
+    }
+    .chip:active{cursor:grabbing}
+    .chip.dragging{opacity:0.25}
+    .slots{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      background:#ffffff;
+    }
+    .slotRow{
+      display:grid;
+      grid-template-columns: 170px 1fr;
+      gap:0;
+      border-bottom:1px solid #f3f4f6;
+      align-items:stretch;
+    }
+    @media (max-width: 420px){
+      .slotRow{grid-template-columns: 132px 1fr;}
+    }
+    .slotRow:last-child{border-bottom:none}
+    .slotLabel{
+      padding:12px;
+      background:#f9fafb;
+      color:#374151;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      border-left:1px solid #f3f4f6;
+      white-space:nowrap;
+    }
+    .dropZone{
+      padding:10px 12px;
+      min-height:54px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+    }
+    .dropZone.empty::before{
+      content: attr(data-placeholder);
+      color:#9ca3af;
+      font-size:13px;
+    }
+    .dropZone.over{
+      outline:3px solid rgba(37,99,235,0.14);
+      border-radius:12px;
+      background:#f8fbff;
+    }
+    .ghost{
+      position:fixed;
+      z-index:9999;
+      pointer-events:none;
+      transform:translate(-50%,-50%);
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid #dbeafe;
+      background:#eff6ff;
+      color:#1e3a8a;
+      font-size:15px;
+      box-shadow: 0 12px 28px rgba(17,24,39,0.18);
+      white-space:nowrap;
+    }
+
+    /* Valence: desktop table vs mobile cards */
+    .valenceDesktop{display:block}
+    .valenceMobile{display:none}
+    @media (max-width: 640px){
+      .valenceDesktop{display:none}
+      .valenceMobile{display:block}
+    }
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius:16px; border:1px solid var(--border); background:#fff}
+    th, td{padding:10px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle}
+    th{color:var(--muted); font-size:13px; text-align:right; background:#f9fafb}
+    td{font-size:14px}
+    tr:last-child td{border-bottom:none}
+    .valence-options{display:flex; gap:10px; flex-wrap:wrap}
+    .mini{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--border);
+      border-radius:999px; padding:7px 10px; background:#ffffff;
+      font-size:13px; color:#111827;
+    }
+    .vCard{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .vCard .w{font-weight:700; margin-bottom:8px}
+
+    /* Success box */
+    .success{
+      display:none; margin-top:14px; border:1px solid rgba(22,163,74,0.30);
+      background:var(--okBg); border-radius:14px; padding:12px; color:#14532d;
+    }
+    .success.active{display:block}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="stepLabel" id="stepLabel">الخطوة 1 من 6</div>
+      <div class="bar" style="flex:1 1 280px"><div id="barFill"></div></div>
+    </div>
+
+    <div class="card">
+      <!-- STEP 1 -->
+      <section class="step active" data-step="1">
+        <h2>التقديم والموافقة</h2>
+
+        <div class="note" style="color:var(--text)">
+          تحية طيبة؛<br><br>
+
+          <b>تُستعمل كلمة "<span class="expertRed">الخبير (l’expert)</span>" في الحياة العامة ضمن سياقات مختلفة، وقد تُفهم بطرق متعددة.</b><br>
+          <b>تهدف هذه الدراسة إلى استطلاع الأفكار والمشاعر والصور المرتبطة بهذه الكلمة لدى الطلبة.</b><br><br>
+
+           <b>نقصد الخبير بصفة عامة، في أي مجالٍ كان، وليس شخصًا بعينه</b>.<br><br>
+
+          ليست هناك إجابات صحيحة وأخرى خاطئة، إذ المهم هو أن تسجل(ي) الأفكار التي تخطر ببالك على نحو تلقائي؛ فهذا ليس امتحانًا، بل مجرد استطلاع للرأي، ولك الحرية الكاملة في المشاركة فيه أو عدمها.<br><br>
+
+          جميع الأجوبة سرية ولن تُستعمل إلا لأغراض البحث العلمي. هذه الاستمارة جزء من بحث علمي في إطار بحث دكتوراه في علم النفس الاجتماعي، بجامعة القاضي عياض بمراكش. للتواصل مع الباحث: a.said.ced@uca.ac.ma
+        </div>
+
+        <div class="radioRow" style="margin-top:10px">
+          <div class="radio" style="flex:1 1 100%">
+            <input type="checkbox" id="consent" />
+            <label for="consent" style="margin:0; color:var(--text); font-size:14px">
+              أوافق على المشاركة في هذه الدراسة.
+            </label>
+          </div>
+        </div>
+
+        <div class="errors" id="errorsStep1"><ul></ul></div>
+
+        <div class="actions">
+          <div></div>
+          <button class="btn primary" id="next1">التالي</button>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step" data-step="2">
+        <h2>القسم الأول</h2>
+
+        <div class="stack">
+          <div class="field">
+            <label>الجنس</label>
+            <div class="radioRow">
+              <div class="radio">
+                <input type="radio" name="gender" id="gMale" value="male" />
+                <label for="gMale" style="margin:0; color:var(--text)">ذكر</label>
+              </div>
+              <div class="radio">
+                <input type="radio" name="gender" id="gFemale" value="female" />
+                <label for="gFemale" style="margin:0; color:var(--text)">أنثى</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="age_years">السن (بالأرقام)</label>
+            <input id="age_years" type="number" min="18" max="26" inputmode="numeric" />
+          </div>
+
+          <div class="field">
+            <label for="university_level">المستوى الجامعي</label>
+            <select id="university_level">
+              <option value="">اختر المستوى</option>
+              <option value="S1">S1</option>
+              <option value="S2">S2</option>
+              <option value="S3">S3</option>
+              <option value="S4">S4</option>
+              <option value="S5">S5</option>
+              <option value="S6">S6</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="major">التخصص الجامعي</label>
+            <input id="major" type="text" />
+          </div>
+        </div>
+
+        <div class="errors" id="errorsStep2"><ul></ul></div>
+
+        <div class="actions">
+          <button class="btn" id="back2">السابق</button>
+          <button class="btn primary" id="next2">التالي</button>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step" data-step="3">
+        <h2>القسم الثاني</h2>
+
+        <div class="qBlock">
+          <p class="qTitle">
+            عندما تسمع التعبير الآتي: <b>"الخبير  (l’expert)"</b><br>
+            ما أوّل خمس (5) كلمات أو عبارات تتبادر إلى ذهنك مباشرة وعلى نحو تلقائي؟
+          </p>
+          <p class="qSub">(اكتب(ي) في كل خانة كلمات مفردة أو عبارات قصيرة)
+مثلا، عندما نسأل شخصا ما عن أول 5 كلمات تخطر بباله عند سماع لفظ "كرة القدم" قد يقول: متعة، حكم، مبارة، ضياع الوقت، زياش"</p>
+
+          <div class="timerBox">
+            <div>رجاءً لا تتجاوز(ي) الوقت الآتي: <b>دقيقتان ونصف</b>، اكتب(ي) بسرعة.</div>
+            <div class="mono">الوقت: <b id="q1Timer">02:30</b></div>
+          </div>
+          <div class="warn" id="q1Warn">تبقى 30 ثانية، يرجى الإسراع في الإجابة.</div>
+
+          <div class="stack" style="margin-top:12px">
+            <div class="field">
+              <label for="assoc_1">الأولى</label>
+              <input id="assoc_1" type="text" />
+            </div>
+            <div class="field">
+              <label for="assoc_2">الثانية</label>
+              <input id="assoc_2" type="text" />
+            </div>
+            <div class="field">
+              <label for="assoc_3">الثالثة</label>
+              <input id="assoc_3" type="text" />
+            </div>
+            <div class="field">
+              <label for="assoc_4">الرابعة</label>
+              <input id="assoc_4" type="text" />
+            </div>
+            <div class="field">
+              <label for="assoc_5">الخامسة</label>
+              <input id="assoc_5" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="errors" id="errorsStep3"><ul></ul></div>
+
+        <div class="actions">
+          <button class="btn" id="back3">السابق</button>
+          <button class="btn primary" id="next3">التالي</button>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step" data-step="4">
+        <h2>الشرح</h2>
+
+        <p class="bigQuestion">
+          اكتب(ي) سبب ربطك لكل كلمة/عبارة قلتها في السؤال الأول بلفظ: "الخبير (l’expert)"
+          <small>يرجى كتابة شرح موجز لكل كلمة/عبارة.</small>
+        </p>
+
+        <div id="explainContainer" class="stack"></div>
+
+        <div class="errors" id="errorsStep4"><ul></ul></div>
+
+        <div class="actions">
+          <button class="btn" id="back4">السابق</button>
+          <button class="btn primary" id="next4">التالي</button>
+        </div>
+      </section>
+
+      <!-- STEP 5 -->
+      <section class="step" data-step="5">
+        <h2>الأهمية</h2>
+
+        <p class="bigQuestion">
+          رتّب(ي) الكلمات الخمس التي قلتَها/قلتِها في السؤال الأول بحسب رتبة أهميتها عندك شخصيا، رتب الكلمات عبر السحب والإفلات
+          <small>اسحب(ي) كل كلمة وضع(ي) كل كلمة في خانتها المناسبة.</small>
+        </p>
+
+        <div class="stack">
+          <div class="rankCard" id="rankWrap">
+            <h3>كلماتك</h3>
+            <div class="wordBank" id="wordBank"></div>
+          </div>
+
+          <div class="rankCard" id="slotsWrap">
+            <h3>خانات الترتيب</h3>
+            <div class="slots" id="slots">
+              <div class="slotRow">
+                <div class="slotLabel">الأهم (1)</div>
+                <div class="dropZone empty" data-rank="1" data-placeholder="ضع(ي) الكلمة هنا"></div>
+              </div>
+              <div class="slotRow">
+                <div class="slotLabel">مهم جدًا (2)</div>
+                <div class="dropZone empty" data-rank="2" data-placeholder="ضع(ي) الكلمة هنا"></div>
+              </div>
+              <div class="slotRow">
+                <div class="slotLabel">مهم (3)</div>
+                <div class="dropZone empty" data-rank="3" data-placeholder="ضع(ي) الكلمة هنا"></div>
+              </div>
+              <div class="slotRow">
+                <div class="slotLabel">متوسط الأهمية (4)</div>
+                <div class="dropZone empty" data-rank="4" data-placeholder="ضع(ي) الكلمة هنا"></div>
+              </div>
+              <div class="slotRow">
+                <div class="slotLabel">ضعيف الأهمية (5)</div>
+                <div class="dropZone empty" data-rank="5" data-placeholder="ضع(ي) الكلمة هنا"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="errors" id="errorsStep5"><ul></ul></div>
+
+        <div class="actions">
+          <button class="btn" id="back5">السابق</button>
+          <button class="btn primary" id="next5">التالي</button>
+        </div>
+      </section>
+
+      <!-- STEP 6 -->
+      <section class="step" data-step="6">
+        <h2>الشعور</h2>
+
+        <p class="note">
+          أمام كل كلمة/عبارة ذكرتَها/ذكرتِها، اختر/اختاري الشعور المناسب الذي تثيره عندك.<br>
+          (ليس هناك شعور "صحيح" وآخر "خاطئ"؛ الأمر شخصي تمامًا)
+        </p>
+
+        <div class="valenceDesktop">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40%">الكلمة/العبارة</th>
+                <th>الشعور الذي تثيره هذه الكلمة/العبارة في نفسي</th>
+              </tr>
+            </thead>
+            <tbody id="valenceTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="valenceMobile" id="valenceMobile"></div>
+
+        <div class="errors" id="errorsStep6"><ul></ul></div>
+
+        <div class="success" id="successBox">
+          <div style="margin-bottom:6px; font-weight:900">شكراً جزيلاً على تعاونكم ومساهمتكم في هذا البحث العلمي.</div>
+          <div class="note" style="margin:0; color:#14532d">
+            الوقت المستغرق: <span class="mono" id="elapsedOut"></span>
+          </div>
+          <div class="note" style="margin:6px 0 0 0; color:#14532d">
+            Response ID: <span class="mono" id="successId"></span>
+          </div>
+          <div class="note" style="margin:6px 0 0 0; color:#14532d" id="successModeNote"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="back6">السابق</button>
+          <button class="btn primary" id="submitBtn">إرسال</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const CONFIG = {
+    formVersion: "v1_local",
+    // "console" | "download" | "post"
+    submitMode: "console",
+    endpointUrl: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL_HERE",
+
+    minLettersInAssoc: 2,
+    forbidDigitsRegex: /[0-9٠-٩]/,
+
+    // Step 3 timer: 2 min 30 sec
+    q1SecondsTotal: 150,
+    q1WarnAtSecondsLeft: 30
+  };
+
+  const state = {
+    step: 1,
+    consent: false,
+    demographics: { gender:"", age_years:"", university_level:"", major:"" },
+    assoc: ["","","","",""],
+    explain: ["","","","",""],
+    order: [null,null,null,null,null], // rank1..rank5 -> assocIndex
+    valence: ["","","","",""],
+
+    totalStartMs: null,
+    totalElapsedMs: 0,
+    totalTickerId: null,
+
+    q1StartMs: null,
+    q1TickId: null,
+    q1SecondsLeft: CONFIG.q1SecondsTotal
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "r_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function normalizeText(s) {
+    if (typeof s !== "string") return "";
+    return s.trim().replace(/\s+/g, " ");
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function updateProgress(){
+    const total = 6;
+    $("#stepLabel").textContent = `الخطوة ${state.step} من ${total}`;
+    $("#barFill").style.width = `${Math.round((state.step-1)/(total-1) * 100)}%`;
+  }
+
+  function setErrors(step, messages) {
+    const box = $("#errorsStep" + step);
+    const ul = box.querySelector("ul");
+    ul.innerHTML = messages.map(m => `<li>${escapeHtml(m)}</li>`).join("");
+    box.classList.toggle("active", messages.length > 0);
+  }
+
+  /***********************
+   * TOTAL TIMER (hidden; shown only at the end)
+   ***********************/
+  function startTotalTimer(){
+    if (state.totalStartMs) return;
+    state.totalStartMs = Date.now();
+    state.totalTickerId = setInterval(() => {
+      state.totalElapsedMs = Date.now() - state.totalStartMs;
+    }, 500);
+  }
+  function stopTotalTimer(){
+    if (state.totalTickerId) clearInterval(state.totalTickerId);
+    state.totalTickerId = null;
+    if (state.totalStartMs) state.totalElapsedMs = Date.now() - state.totalStartMs;
+  }
+  function formatElapsed(ms){
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m} دقيقة و ${String(s).padStart(2,"0")} ثانية`;
+  }
+
+  /***********************
+   * STEP 3 TIMER
+   ***********************/
+  function formatMMSS(totalSeconds){
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+  function updateQ1TimerUI(){
+    $("#q1Timer").textContent = formatMMSS(state.q1SecondsLeft);
+    const warn = $("#q1Warn");
+    warn.classList.toggle("active", state.q1SecondsLeft === CONFIG.q1WarnAtSecondsLeft);
+    if (state.q1SecondsLeft !== CONFIG.q1WarnAtSecondsLeft) warn.classList.remove("active");
+  }
+  function startQ1Timer(){
+    state.q1StartMs = Date.now();
+    state.q1SecondsLeft = CONFIG.q1SecondsTotal;
+    updateQ1TimerUI();
+    if (state.q1TickId) clearInterval(state.q1TickId);
+
+    state.q1TickId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - state.q1StartMs) / 1000);
+      const left = CONFIG.q1SecondsTotal - elapsed;
+      state.q1SecondsLeft = Math.max(0, left);
+      updateQ1TimerUI();
+    }, 250);
+  }
+  function stopQ1Timer(){
+    if (state.q1TickId){
+      clearInterval(state.q1TickId);
+      state.q1TickId = null;
+    }
+    $("#q1Warn").classList.remove("active");
+  }
+
+  /***********************
+   * CAPTURE / HYDRATE
+   ***********************/
+  function captureStep(n){
+    if (n === 1){
+      state.consent = $("#consent").checked;
+      return;
+    }
+    if (n === 2){
+      const gender = $$('input[name="gender"]:checked')[0]?.value || "";
+      const age = normalizeText($("#age_years").value);
+      const lvl = $("#university_level").value;
+      const major = normalizeText($("#major").value);
+      state.demographics = { gender, age_years: age, university_level: lvl, major };
+      return;
+    }
+    if (n === 3){
+      const inputs = [1,2,3,4,5].map(i => $("#assoc_"+i).value);
+      state.assoc = inputs.map(s => normalizeText(s));
+      return;
+    }
+    if (n === 4){
+      const explains = [1,2,3,4,5].map(i => normalizeText($("#explain_"+i)?.value || ""));
+      state.explain = explains;
+      return;
+    }
+    if (n === 5){
+      const zones = $$(".dropZone");
+      const order = [];
+      zones.forEach((z, idx) => {
+        const chip = z.querySelector(".chip");
+        order[idx] = chip ? Number(chip.dataset.index) : null;
+      });
+      state.order = order;
+      return;
+    }
+    if (n === 6){
+      const vals = [];
+      for (let i=1;i<=5;i++){
+        const picked = $$(`input[name="valence_${i}"]:checked`)[0]?.value || "";
+        vals.push(picked);
+      }
+      state.valence = vals;
+      return;
+    }
+  }
+
+  function hydrateStep(n){
+    if (n === 1){
+      $("#consent").checked = !!state.consent;
+      return;
+    }
+    if (n === 2){
+      $$('input[name="gender"]').forEach(r => r.checked = (r.value === state.demographics.gender));
+      $("#age_years").value = state.demographics.age_years || "";
+      $("#university_level").value = state.demographics.university_level || "";
+      $("#major").value = state.demographics.major || "";
+      return;
+    }
+    if (n === 3){
+      ["assoc_1","assoc_2","assoc_3","assoc_4","assoc_5"].forEach((id, idx) => {
+        $("#"+id).value = state.assoc[idx] || "";
+      });
+      return;
+    }
+    if (n === 4){
+      if (!$("#explain_1")) buildExplainStep();
+      for (let i=1;i<=5;i++){
+        const t = $("#explain_"+i);
+        if (t) t.value = state.explain[i-1] || "";
+      }
+      return;
+    }
+    if (n === 5){
+      if (!$("#wordBank") || $("#wordBank").children.length === 0) buildRankingStep();
+      applyRankingFromState();
+      return;
+    }
+    if (n === 6){
+      if (!$("#valenceTbody") || $("#valenceTbody").children.length === 0) buildValenceStep();
+      applyValenceFromState();
+      return;
+    }
+  }
+
+  /***********************
+   * VALIDATORS
+   ***********************/
+  function countLetters(s) {
+    const m = s.match(/\p{L}/gu);
+    return m ? m.length : 0;
+  }
+  function hasDigits(s) { return CONFIG.forbidDigitsRegex.test(s); }
+
+  function validateStep1(){
+    const errs = [];
+    if (!$("#consent").checked) errs.push("يلزم وضع علامة الموافقة للمتابعة.");
+    setErrors(1, errs);
+    if (errs.length === 0) state.consent = true;
+    return errs.length === 0;
+  }
+
+  function validateStep2(){
+    const errs = [];
+    const gender = $$('input[name="gender"]:checked')[0]?.value || "";
+    const age = normalizeText($("#age_years").value);
+    const lvl = $("#university_level").value;
+    const major = normalizeText($("#major").value);
+
+    if (!gender) errs.push("يرجى تحديد الجنس.");
+    if (!age) errs.push("يرجى إدخال السن.");
+    else {
+      const n = Number(age);
+      if (!Number.isFinite(n) || n < 18 || n > 26) errs.push("يرجى إدخال سن بين 18 و26.");
+    }
+    if (!lvl) errs.push("يرجى اختيار المستوى الجامعي.");
+    if (!major) errs.push("يرجى إدخال التخصص الجامعي.");
+
+    setErrors(2, errs);
+    if (errs.length === 0){
+      state.demographics = { gender, age_years: Number(age), university_level: lvl, major };
+    }
+    return errs.length === 0;
+  }
+
+  function validateStep3(){
+    const errs = [];
+    const inputs = [1,2,3,4,5].map(i => $("#assoc_"+i).value);
+    const norm = inputs.map(s => normalizeText(s));
+
+    norm.forEach((v, idx) => {
+      if (!v) errs.push(`يرجى ملء المدخل رقم ${idx+1}.`);
+      else {
+        if (hasDigits(v)) errs.push(`المدخل رقم ${idx+1}: لا يُسمح بإدخال الأرقام.`);
+        if (countLetters(v) < CONFIG.minLettersInAssoc) errs.push(`المدخل رقم ${idx+1}: يرجى إدخال كلمة/عبارة تتضمن أكثر من حرف واحد.`);
+      }
+    });
+
+    const key = norm.map(v => v.toLowerCase());
+    const seen = new Map();
+    key.forEach((k, i) => {
+      if (!k) return;
+      if (seen.has(k)) errs.push(`يوجد تكرار بين المدخلين ${seen.get(k)+1} و${i+1}.`);
+      else seen.set(k, i);
+    });
+
+    setErrors(3, errs);
+    if (errs.length === 0){
+      state.assoc = norm;
+    }
+    return errs.length === 0;
+  }
+
+  function validateStep4(){
+    const errs = [];
+    const explains = [1,2,3,4,5].map(i => normalizeText($("#explain_"+i).value));
+    explains.forEach((v, idx) => {
+      if (!v) errs.push(`يرجى إتمام الشرح للكلمة: «${state.assoc[idx]}».`);
+    });
+    setErrors(4, errs);
+    if (errs.length === 0) state.explain = explains;
+    return errs.length === 0;
+  }
+
+  function validateStep5(){
+    const errs = [];
+    const zones = $$(".dropZone");
+    const order = [];
+    zones.forEach((z, idx) => {
+      const chip = z.querySelector(".chip");
+      if (!chip) errs.push("يرجى إتمام الترتيب بملء جميع الخانات.");
+      else order[idx] = Number(chip.dataset.index);
+    });
+    const unique = new Set(order.filter(x => x !== undefined));
+    if (unique.size !== 5) errs.push("حدث خطأ في الترتيب. أعد(ي) توزيع الكلمات داخل الخانات.");
+
+    setErrors(5, errs);
+    if (errs.length === 0) state.order = order;
+    return errs.length === 0;
+  }
+
+  function validateStep6(){
+    const errs = [];
+    const vals = [];
+    for (let i=1;i<=5;i++){
+      const picked = $$(`input[name="valence_${i}"]:checked`)[0]?.value || "";
+      vals.push(picked);
+      if (!picked) errs.push(`يرجى اختيار الشعور للكلمة: «${state.assoc[i-1]}».`);
+    }
+    setErrors(6, errs);
+    if (errs.length === 0) state.valence = vals;
+    return errs.length === 0;
+  }
+
+  /***********************
+   * BUILDERS
+   ***********************/
+  function buildExplainStep(){
+    const c = $("#explainContainer");
+    c.innerHTML = "";
+    state.assoc.forEach((w, idx) => {
+      const i = idx+1;
+      const block = document.createElement("div");
+      block.className = "field";
+      block.innerHTML = `
+        <label style="color:var(--text); font-weight:700">
+          ربطتُ كلمة: «${escapeHtml(w)}» بلفظ خبير (l’expert) لأن...
+        </label>
+        <textarea id="explain_${i}" placeholder="علاقة هذا التعبير بلفظ الخبير"></textarea>
+      `;
+      c.appendChild(block);
+    });
+
+    for (let i=1;i<=5;i++){
+      $("#explain_"+i).addEventListener("input", () => captureStep(4));
+    }
+  }
+
+  function buildRankingStep(){
+    const bank = $("#wordBank");
+    bank.innerHTML = "";
+
+    $$(".dropZone").forEach(z => {
+      z.innerHTML = "";
+      z.classList.add("empty");
+    });
+
+    state.assoc.forEach((w, idx) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.dataset.index = String(idx);
+      chip.textContent = w;
+      bank.appendChild(chip);
+    });
+
+    enableTouchDrag();
+    applyRankingFromState();
+  }
+
+  function applyRankingFromState(){
+    const hasAny = state.order.some(x => x !== null && x !== undefined);
+    if (!hasAny) return;
+
+    const bank = $("#wordBank");
+    const zones = $$(".dropZone");
+
+    zones.forEach(z => {
+      const chip = z.querySelector(".chip");
+      if (chip) bank.appendChild(chip);
+      z.innerHTML = "";
+      z.classList.add("empty");
+    });
+
+    state.order.forEach((assocIndex, pos) => {
+      if (assocIndex === null || assocIndex === undefined) return;
+      const chip = bank.querySelector(`.chip[data-index="${assocIndex}"]`);
+      const zone = zones[pos];
+      if (chip && zone){
+        zone.innerHTML = "";
+        zone.appendChild(chip);
+        zone.classList.remove("empty");
+      }
+    });
+  }
+
+  function buildValenceStep(){
+    const tb = $("#valenceTbody");
+    tb.innerHTML = "";
+    const mob = $("#valenceMobile");
+    mob.innerHTML = "";
+
+    state.assoc.forEach((w, idx) => {
+      const i = idx+1;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><b>${escapeHtml(w)}</b></td>
+        <td>
+          <div class="valence-options">
+            <label class="mini"><input type="radio" name="valence_${i}" value="positive" /> إيجابي (+)</label>
+            <label class="mini"><input type="radio" name="valence_${i}" value="neutral" /> محايد (0)</label>
+            <label class="mini"><input type="radio" name="valence_${i}" value="negative" /> سلبي (-)</label>
+          </div>
+        </td>
+      `;
+      tb.appendChild(tr);
+
+      const card = document.createElement("div");
+      card.className = "vCard";
+      card.innerHTML = `
+        <div class="w">الكلمة/العبارة: ${escapeHtml(w)}</div>
+        <div class="valence-options">
+          <label class="mini"><input type="radio" name="valence_${i}" value="positive" /> إيجابي (+)</label>
+          <label class="mini"><input type="radio" name="valence_${i}" value="neutral" /> محايد (0)</label>
+          <label class="mini"><input type="radio" name="valence_${i}" value="negative" /> سلبي (-)</label>
+        </div>
+      `;
+      mob.appendChild(card);
+    });
+
+    for (let i=1;i<=5;i++){
+      $$(`input[name="valence_${i}"]`).forEach(r => r.addEventListener("change", () => captureStep(6)));
+    }
+  }
+
+  function applyValenceFromState(){
+    for (let i=1;i<=5;i++){
+      const v = state.valence[i-1] || "";
+      if (!v) continue;
+      const input = $$(`input[name="valence_${i}"]`).find(r => r.value === v);
+      if (input) input.checked = true;
+    }
+  }
+
+  /***********************
+   * MOBILE-FRIENDLY DRAG (Pointer-based)
+   ***********************/
+  function enableTouchDrag(){
+    // reset by cloning to remove old listeners cleanly
+    const bankOld = $("#wordBank");
+    const bankNew = bankOld.cloneNode(true);
+    bankOld.parentNode.replaceChild(bankNew, bankOld);
+
+    const zonesOld = $$(".dropZone");
+    zonesOld.forEach(z => {
+      const zNew = z.cloneNode(true);
+      z.parentNode.replaceChild(zNew, z);
+    });
+
+    const bank = $("#wordBank");
+    const zones = $$(".dropZone");
+
+    let draggingChip = null;
+    let ghost = null;
+    let lastOver = null;
+    let startScrollY = 0;
+
+    function clearOver(){
+      if (lastOver) lastOver.classList.remove("over");
+      lastOver = null;
+    }
+    function makeGhost(text, x, y){
+      ghost = document.createElement("div");
+      ghost.className = "ghost";
+      ghost.textContent = text;
+      document.body.appendChild(ghost);
+      moveGhost(x,y);
+    }
+    function moveGhost(x,y){
+      if (!ghost) return;
+      ghost.style.left = x + "px";
+      ghost.style.top = y + "px";
+    }
+    function findDropTarget(clientX, clientY){
+      const el = document.elementFromPoint(clientX, clientY);
+      if (!el) return null;
+      const dz = el.closest(".dropZone");
+      if (dz) return dz;
+      const wb = el.closest("#wordBank");
+      if (wb) return wb;
+      return null;
+    }
+    function swapOrPlace(targetZone, chip){
+      const sourceParent = chip.parentElement;
+      const existing = targetZone.querySelector(".chip");
+
+      if (existing){
+        sourceParent.appendChild(existing);
+        if (sourceParent.classList.contains("dropZone")){
+          sourceParent.classList.remove("empty");
+        }
+      }
+
+      targetZone.innerHTML = "";
+      targetZone.appendChild(chip);
+      targetZone.classList.remove("empty");
+
+      if (sourceParent.classList.contains("dropZone")){
+        if (sourceParent.querySelectorAll(".chip").length === 0){
+          sourceParent.classList.add("empty");
+        }
+      }
+    }
+    function dropToBank(bankEl, chip){
+      const sourceParent = chip.parentElement;
+      bankEl.appendChild(chip);
+      if (sourceParent.classList.contains("dropZone")){
+        sourceParent.classList.add("empty");
+      }
+    }
+
+    function onPointerDown(e){
+      const chip = e.currentTarget;
+      draggingChip = chip;
+      chip.classList.add("dragging");
+      startScrollY = window.scrollY;
+
+      chip.setPointerCapture?.(e.pointerId);
+      makeGhost(chip.textContent, e.clientX, e.clientY);
+      e.preventDefault();
+    }
+
+    function onPointerMove(e){
+      if (!draggingChip) return;
+      moveGhost(e.clientX, e.clientY);
+
+      const t = findDropTarget(e.clientX, e.clientY);
+      clearOver();
+      if (t && t.classList && t.classList.contains("dropZone")){
+        t.classList.add("over");
+        lastOver = t;
+      }
+
+      if (Math.abs(window.scrollY - startScrollY) > 2) window.scrollTo({ top: startScrollY });
+      e.preventDefault();
+    }
+
+    function onPointerUp(e){
+      if (!draggingChip) return;
+
+      const t = findDropTarget(e.clientX, e.clientY);
+      clearOver();
+
+      if (t && t.id === "wordBank"){
+        dropToBank(t, draggingChip);
+      } else if (t && t.classList && t.classList.contains("dropZone")){
+        swapOrPlace(t, draggingChip);
+      }
+
+      captureStep(5);
+
+      draggingChip.classList.remove("dragging");
+      draggingChip = null;
+
+      if (ghost){ ghost.remove(); ghost = null; }
+      e.preventDefault();
+    }
+
+    function bindChip(chip){
+      chip.addEventListener("pointerdown", onPointerDown, {passive:false});
+      chip.addEventListener("pointermove", onPointerMove, {passive:false});
+      chip.addEventListener("pointerup", onPointerUp, {passive:false});
+      chip.addEventListener("pointercancel", onPointerUp, {passive:false});
+    }
+
+    Array.from(bank.querySelectorAll(".chip")).forEach(bindChip);
+
+    zones.forEach(z => {
+      z.addEventListener("pointermove", (e) => { if (draggingChip) e.preventDefault(); }, {passive:false});
+    });
+    bank.addEventListener("pointermove", (e) => { if (draggingChip) e.preventDefault(); }, {passive:false});
+  }
+
+  /***********************
+   * SUBMIT
+   ***********************/
+  function buildPayload(){
+    const rankPerAssoc = Array(5).fill(0);
+    state.order.forEach((assocIndex, pos) => {
+      if (assocIndex === null || assocIndex === undefined) return;
+      rankPerAssoc[assocIndex] = pos + 1;
+    });
+
+    return {
+      timestamp: new Date().toISOString(),
+      response_id: uuid(),
+      form_version: CONFIG.formVersion,
+      consent: true,
+
+      gender: state.demographics.gender,
+      age_years: Number(state.demographics.age_years),
+      university_level: state.demographics.university_level,
+      major: state.demographics.major,
+
+      assoc_1: state.assoc[0],
+      assoc_2: state.assoc[1],
+      assoc_3: state.assoc[2],
+      assoc_4: state.assoc[3],
+      assoc_5: state.assoc[4],
+
+      explain_1: state.explain[0],
+      explain_2: state.explain[1],
+      explain_3: state.explain[2],
+      explain_4: state.explain[3],
+      explain_5: state.explain[4],
+
+      rank_1: rankPerAssoc[0],
+      rank_2: rankPerAssoc[1],
+      rank_3: rankPerAssoc[2],
+      rank_4: rankPerAssoc[3],
+      rank_5: rankPerAssoc[4],
+
+      valence_1: state.valence[0],
+      valence_2: state.valence[1],
+      valence_3: state.valence[2],
+      valence_4: state.valence[3],
+      valence_5: state.valence[4],
+
+      ordered_by_importance: state.order.map(idx => (idx === null ? null : state.assoc[idx])),
+
+      elapsed_ms: state.totalElapsedMs
+    };
+  }
+
+  async function submitPayload(payload){
+    if (CONFIG.submitMode === "console"){
+      console.log("FORM_PAYLOAD", payload);
+      return { ok:true, note:"تم حفظ الإجابة محليًا (Console)." };
+    }
+    if (CONFIG.submitMode === "download"){
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `response_${payload.response_id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return { ok:true, note:"تم تنزيل ملف JSON محليًا." };
+    }
+    if (CONFIG.submitMode === "post"){
+      if (!CONFIG.endpointUrl || CONFIG.endpointUrl.includes("PASTE_YOUR")) {
+        return { ok:false, error:"لم يتم ضبط رابط endpointUrl بعد." };
+      }
+      const res = await fetch(CONFIG.endpointUrl, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return { ok:false, error:`فشل الإرسال. HTTP ${res.status}` };
+      return { ok:true, note:"تم الإرسال إلى الخادم." };
+    }
+    return { ok:false, error:"submitMode غير معروف." };
+  }
+
+  /***********************
+   * NAVIGATION
+   ***********************/
+  function showStep(n){
+    state.step = n;
+    $$(".step").forEach(sec => sec.classList.toggle("active", Number(sec.dataset.step) === n));
+    updateProgress();
+
+    if (n === 3) startQ1Timer(); else stopQ1Timer();
+
+    hydrateStep(n);
+  }
+
+  // Step 1 -> 2
+  $("#next1").addEventListener("click", () => {
+    if (!validateStep1()) return;
+    startTotalTimer();
+    showStep(2);
+  });
+
+  // Step 2 back/next
+  $("#back2").addEventListener("click", () => {
+    captureStep(2);
+    showStep(1);
+  });
+  $("#next2").addEventListener("click", () => {
+    if (!validateStep2()) return;
+    captureStep(2);
+    showStep(3);
+  });
+
+  // Step 3 back/next (allowed now)
+  $("#back3").addEventListener("click", () => {
+    captureStep(3);
+    showStep(2);
+  });
+  $("#next3").addEventListener("click", () => {
+    if (!validateStep3()) return;
+    captureStep(3);
+    buildExplainStep();
+    showStep(4);
+  });
+
+  // Step 4 back/next
+  $("#back4").addEventListener("click", () => {
+    captureStep(4);
+    showStep(3);
+  });
+  $("#next4").addEventListener("click", () => {
+    if (!validateStep4()) return;
+    captureStep(4);
+    buildRankingStep();
+    showStep(5);
+  });
+
+  // Step 5 back/next
+  $("#back5").addEventListener("click", () => {
+    captureStep(5);
+    showStep(4);
+  });
+  $("#next5").addEventListener("click", () => {
+    if (!validateStep5()) return;
+    captureStep(5);
+    buildValenceStep();
+    applyValenceFromState();
+    showStep(6);
+  });
+
+  // Step 6 back/submit
+  $("#back6").addEventListener("click", () => {
+    captureStep(6);
+    showStep(5);
+  });
+
+  $("#submitBtn").addEventListener("click", async () => {
+    $("#successBox").classList.remove("active");
+
+    captureStep(6);
+    if (!validateStep6()) return;
+
+    stopTotalTimer();
+
+    const payload = buildPayload();
+    $("#submitBtn").disabled = true;
+
+    try{
+      const result = await submitPayload(payload);
+      if (!result.ok){
+        setErrors(6, [result.error || "فشل الإرسال."]);
+        $("#submitBtn").disabled = false;
+        return;
+      }
+
+      $("#successId").textContent = payload.response_id;
+      $("#elapsedOut").textContent = formatElapsed(payload.elapsed_ms);
+      $("#successModeNote").textContent = result.note || "";
+      $("#successBox").classList.add("active");
+    } catch(err){
+      setErrors(6, [String(err?.message || err)]);
+      $("#submitBtn").disabled = false;
+    }
+  });
+
+  /***********************
+   * INIT
+   ***********************/
+  updateProgress();
+  showStep(1);
+})();
+</script>
+</body>
+</html>
