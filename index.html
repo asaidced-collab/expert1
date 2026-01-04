@@ -58,6 +58,13 @@
     h2{margin:0 0 10px 0; font-size:16px}
     .note{color:var(--muted); font-size:13px; line-height:1.75; margin:0 0 14px 0}
 
+    /* ✅ تكبير سؤال الشعور فقط (STEP 6) */
+    .valenceQuestion{
+      font-size:18px;
+      line-height:2;
+      color:var(--text);
+    }
+
     label{display:block; font-size:13px; color:var(--muted); margin:0 0 6px 0}
     input[type="text"], input[type="number"], select, textarea{
       width:100%; background:#fff; color:var(--text);
@@ -515,7 +522,7 @@
       <section class="step" data-step="6">
         <h2>الشعور</h2>
 
-        <p class="note">
+        <p class="note valenceQuestion">
           أمام كل كلمة/عبارة ذكرتَها/ذكرتِها، اختر/اختاري الشعور المناسب الذي تثيره عندك.<br>
           (ليس هناك شعور "صحيح" وآخر "خاطئ"؛ الأمر شخصي تمامًا)
         </p>
@@ -560,8 +567,8 @@
   const CONFIG = {
     formVersion: "v1_local",
     // "console" | "download" | "post"
-    submitMode: "console",
-    endpointUrl: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL_HERE",
+    submitMode: "post",
+    endpointUrl: "https://script.google.com/macros/s/AKfycbxa3abBYZwQp9OIuEjqboXY-2mIVQYLLx4Fzukc0F3A8hAf49fSE2D-3OxUrWlIYnZT/exec",
 
     minLettersInAssoc: 2,
     forbidDigitsRegex: /[0-9٠-٩]/,
@@ -1182,34 +1189,41 @@
     };
   }
 
-  async function submitPayload(payload){
-    if (CONFIG.submitMode === "console"){
-      console.log("FORM_PAYLOAD", payload);
-      return { ok:true, note:"تم حفظ الإجابة محليًا (Console)." };
+async function submitPayload(payload){
+  if (CONFIG.submitMode === "console"){
+    console.log("FORM_PAYLOAD", payload);
+    return { ok:true, note:"تم حفظ الإجابة محليًا (Console)." };
+  }
+
+  if (CONFIG.submitMode === "download"){
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `response_${payload.response_id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return { ok:true, note:"تم تنزيل ملف JSON محليًا." };
+  }
+
+  if (CONFIG.submitMode === "post"){
+    if (!CONFIG.endpointUrl || CONFIG.endpointUrl.includes("PASTE_YOUR")) {
+      return { ok:false, error:"لم يتم ضبط رابط endpointUrl بعد." };
     }
-    if (CONFIG.submitMode === "download"){
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `response_${payload.response_id}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      return { ok:true, note:"تم تنزيل ملف JSON محليًا." };
-    }
-    if (CONFIG.submitMode === "post"){
-      if (!CONFIG.endpointUrl || CONFIG.endpointUrl.includes("PASTE_YOUR")) {
-        return { ok:false, error:"لم يتم ضبط رابط endpointUrl بعد." };
-      }
-      const res = await fetch(CONFIG.endpointUrl, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return { ok:false, error:`فشل الإرسال. HTTP ${res.status}` };
-      return { ok:true, note:"تم الإرسال إلى الخادم." };
-    }
-    return { ok:false, error:"submitMode غير معروف." };
+
+    // مهم: no-cors لتجاوز CORS + بدون headers لتفادي preflight
+    await fetch(CONFIG.endpointUrl, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(payload) // سيُرسل كـ text/plain افتراضيًا
+    });
+
+    // لن نستطيع التأكد من الرد بسبب no-cors، لكن إذا لم يُرمَ خطأ فالطلب غالبًا وصل
+    return { ok:true, note:"تم الإرسال." };
+  }
+
+  return { ok:false, error:"submitMode غير معروف." };
+
   }
 
   /***********************
